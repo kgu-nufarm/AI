@@ -3,15 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOLOv8 실시간 객체 탐지</title>
+    <title>Real-Time Webcam Image</title>
+    <style>
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>YOLOv8 실시간 객체 탐지</h1>
-    <p>웹캠을 통한 실시간 객체 탐지 화면입니다.</p>
 
-    <!-- 실시간 웹캠 스트리밍 -->
-    <img src="{{ url_for('video_feed') }}" width="640" height="480">
+    <!-- 실시간 웹캠 이미지 표시 -->
+    <img id="webcamImage" src="/image" alt="Webcam Image">
 
-    <p>종료하려면 'q'를 누르세요.</p>
+    <script>
+        // 이미지 자동 갱신 함수
+        function autoRefreshImage() {
+            // 타임스탬프를 추가하여 캐시 무효화 (이미지 갱신)
+            document.getElementById('webcamImage').src = '/image?' + new Date().getTime();
+        }
+
+        // 페이지 로드 시 자동으로 이미지 갱신 시작 (0.5초마다 갱신)
+        window.onload = function() {
+            setInterval(autoRefreshImage, 100);  // 500ms마다 이미지 새로고침
+        };
+    </script>
 </body>
 </html>
