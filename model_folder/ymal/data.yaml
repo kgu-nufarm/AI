@@ -1,0 +1,14 @@
+names:
+- Level_1
+- Level_2
+- Level_3
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: level-objhh
+  url: https://universe.roboflow.com/smart-farm-juaeh/level-objhh/dataset/1
+  version: 1
+  workspace: smart-farm-juaeh
+test: /content/level-1/test/images
+train: /content/level-1/train/images
+val: /content/level-1/valid/images
