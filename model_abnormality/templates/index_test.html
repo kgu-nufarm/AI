@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Webcam Image</title>
+    <style>
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .counts {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Real-Time Webcam Feed with Object Counts</h1>
+    
+    <!-- 클래스별 박스 개수를 표시할 부분 -->
+    <div class="counts">
+        <p id="classCounts">Loading object counts...</p>
+    </div>
+
+    <!-- 실시간 웹캠 이미지 표시 -->
+    <img id="webcamImage" src="/image" alt="Webcam Image">
+
+    <script>
+        // 이미지 자동 갱신 함수
+        function autoRefreshImage() {
+            // 타임스탬프를 추가하여 캐시 무효화 (이미지 갱신)
+            document.getElementById('webcamImage').src = '/image?' + new Date().getTime();
+        }
+
+        // 클래스별 박스 개수를 가져와서 업데이트하는 함수
+        function updateClassCounts() {
+            fetch('/get_class_counts')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('classCounts').innerText = 
+                        `level_1: ${data.level_1}\n
+                         level_2: ${data.level_2}\n
+                         level_3: ${data.level_3}`;
+                })
+                .catch(error => {
+                    console.error('Error fetching class counts:', error);
+                });
+        }
+
+        // 페이지 로드 시 자동으로 이미지 및 클래스 개수 갱신 시작
+        window.onload = function() {
+            setInterval(autoRefreshImage, 100);  // 0.1초마다 이미지 새로고침
+            setInterval(updateClassCounts, 1000);  // 1초마다 클래스 카운트 갱신
+        };
+    </script>
+</body>
+</html>
