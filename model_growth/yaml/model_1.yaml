@@ -1,0 +1,13 @@
+names:
+- Level_1
+- Level_2
+nc: 2
+roboflow:
+  license: CC BY 4.0
+  project: 1-2-rthaj
+  url: https://universe.roboflow.com/smart-farm-juaeh/1-2-rthaj/dataset/1
+  version: 1
+  workspace: smart-farm-juaeh
+test: ../test/images
+train: "1,2\uB2E8\uACC4-\uC0C1\uCD94-1/train/images"
+val: "1,2\uB2E8\uACC4-\uC0C1\uCD94-1/valid/images"
