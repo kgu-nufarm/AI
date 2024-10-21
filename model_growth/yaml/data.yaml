@@ -1,0 +1,14 @@
+names:
+- Level_1
+- Level_2
+- Level_3
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: only-zr9ic
+  url: https://universe.roboflow.com/smart-farm-juaeh/only-zr9ic/dataset/1
+  version: 1
+  workspace: smart-farm-juaeh
+test: /content/only-1/test/images
+train: /content/only-1/train/images
+val: /content/only-1/valid/images
