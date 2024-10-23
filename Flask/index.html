@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Webcam Feed</title>
+</head>
+<body>
+    <h1>Real-Time Webcam Feed with Object Counts</h1>
+    <img id="live-image" src="" alt="Webcam Image" style="max-width: 100%; height: auto;"/>
+
+    <script>
+        // 현재 페이지의 URL을 분석하여 모델 이름을 결정
+        const currentPath = window.location.pathname;
+        let imageUrl;
+
+        // 페이지 경로에 따라 이미지 URL 설정
+        if (currentPath.includes('/model1')) {
+            imageUrl = '/image_model1';  // Model 1에 대한 이미지 URL
+        } else if (currentPath.includes('/model2')) {
+            imageUrl = '/image_model2';  // Model 2에 대한 이미지 URL
+        }
+
+        // 주기적으로 이미지 갱신
+        if (imageUrl) {
+            setInterval(() => {
+                const img = document.getElementById('live-image');
+                img.src = imageUrl + '?' + new Date().getTime(); // Cache 방지를 위해 timestamp 추가
+            }, 1000);  // 1초마다 이미지 갱신 (필요에 따라 조정 가능)
+        } else {
+            console.error('Invalid page path: Unable to determine the correct image URL.');
+        }
+    </script>
+</body>
+</html>
