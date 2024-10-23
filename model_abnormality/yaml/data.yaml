@@ -1,0 +1,13 @@
+names:
+- hole
+- wither
+nc: 2
+roboflow:
+  license: CC BY 4.0
+  project: -_1-fjpls
+  url: https://universe.roboflow.com/smart-farm-juaeh/-_1-fjpls/dataset/1
+  version: 1
+  workspace: smart-farm-juaeh
+test: /content/abnormal/test/images
+train: /content/abnormal/train/images
+val: /content/abnormal/valid/images
