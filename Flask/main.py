@@ -9,8 +9,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-model1 = YOLO('abnormal_1.pt')
-model2 = YOLO('best.pt')
+model1 = YOLO('abnormal.pt')
+model2 = YOLO('growth.pt')
 
 # 웹캠 인덱스
 camera = cv2.VideoCapture(2)
@@ -94,11 +94,11 @@ thread2.start()
 
 @app.route('/model1')
 def index_model1():
-    return render_template('index_test.html')
+    return render_template('index.html')
 
 @app.route('/model2')
 def index_model2():
-    return render_template('index_test.html')
+    return render_template('index.html')
 
 @app.route('/image_model1', methods=['GET'])
 def get_image_model1():
