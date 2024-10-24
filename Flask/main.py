@@ -7,6 +7,8 @@ from ultralytics import YOLO
 from flask_cors import CORS
 import requests
 from flasgger import Swagger
+from datetime import datetime
+
 
 app = Flask(__name__)
 CORS(app)
@@ -52,29 +54,42 @@ status = False # 감지 상태 저장
 freeze_status = False # 상태 정보 고정
 status_lock = threading.Lock() # 동시 접근 제어를 위한 lock
 
+# # 백엔드로 이상감지 정보 전달
+# def send_notification(class_counts):
+#     url = "http://3.34.153.235:8080/api/notification/save?userId=1"
+    
+#     print(f"Sending request to {url}")
+
+#     try:
+#         response = requests.post(url)
+#         if response.status_code == 200:
+#             print("Notification sent successfully.")
+#         else:
+#             print(f"Failed to send notification: {response.status_code}")
+#     except Exception as e:
+#         print(f"Error sending notification: {e}")
+
 # 백엔드로 이상감지 정보 전달
-def send_notification(class_counts):
-    url = "http://3.34.153.235:8080/api/notification/save?userId=1"
+def send_notification(detected_counts):
+    url = "http://3.34.153.235:8080/api/notification/save"
     params = {
-        'hole': class_counts.get('hole', 0),
-        'wither': class_counts.get('wither', 0),
+        'userId': 1,
+        'hole': detected_counts.get('hole', 0),
+        'wither': detected_counts.get('wither', 0),
         'timestamp': datetime.now().isoformat()  # 현재 시간을 ISO 형식으로 추가
     }
 
-    headers = {
-        'Authorization': 'Bearer YOUR_API_TOKEN'  # 필요하다면 인증 토큰 추가
-    }
-    
-    print(f"Sending request to {url} with params: {params}")
+    print(f"Sending GET request to {url} with params: {params}")
 
     try:
         response = requests.get(url, params=params)
         if response.status_code == 200:
             print("Notification sent successfully.")
         else:
-            print(f"Failed to send notification: {response.status_code}")
+            print(f"Failed to send notification: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"Error sending notification: {e}")
+
 
 def capture_image_periodically(model, img_path, class_names, class_colors):
     global status, freeze_status
@@ -112,6 +127,7 @@ def capture_image_periodically(model, img_path, class_names, class_colors):
             elif any(count > 0 for count in detected_counts.values()):
                 with status_lock:
                     status = True
+                    send_notification(detected_counts)  # 이상 감지가 발생한 경우 백엔드로 알림 전송
                     # print("Status changed to True due to new detection.")
 
             # 감지된 객체가 없는 경우 상태를 False로 유지
