@@ -6,9 +6,11 @@ import time
 from ultralytics import YOLO
 from flask_cors import CORS
 import requests
+from flasgger import Swagger
 
 app = Flask(__name__)
 CORS(app)
+swagger = Swagger(app)
 
 model1 = YOLO('abnormal.pt')
 model2 = YOLO('growth.pt')
@@ -50,25 +52,29 @@ status = False # 감지 상태 저장
 freeze_status = False # 상태 정보 고정
 status_lock = threading.Lock() # 동시 접근 제어를 위한 lock
 
-# # 백엔드로 이상감지 정보 전달
-# def send_notification(class_counts):
-#     url = "http://3.34.153.235:8080//api/notification/save"
-#     params = {
-#         'hole': class_counts.get('hole', 0),
-#         'wither': class_counts.get('wither', 0)
-#     }
+# 백엔드로 이상감지 정보 전달
+def send_notification(class_counts):
+    url = "http://3.34.153.235:8080/api/notification/save?userId=1"
+    params = {
+        'hole': class_counts.get('hole', 0),
+        'wither': class_counts.get('wither', 0),
+        'timestamp': datetime.now().isoformat()  # 현재 시간을 ISO 형식으로 추가
+    }
 
-#     print(f"Sending request to {url} with params: {params}")
+    headers = {
+        'Authorization': 'Bearer YOUR_API_TOKEN'  # 필요하다면 인증 토큰 추가
+    }
+    
+    print(f"Sending request to {url} with params: {params}")
 
-#     # 403 오류 발생 : API 호출 시 인증 정보가 누락되었거나 잘못된 경우. 예를 들어, API 키, 인증 토큰이 없거나 잘못된 값을 사용할 때
-#     try:
-#         response = requests.get(url, params=params)
-#         if response.status_code == 200:
-#             print("Notification sent successfully.")
-#         else:
-#             print(f"Failed to send notification: {response.status_code}")
-#     except Exception as e:
-#         print(f"Error sending notification: {e}")
+    try:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            print("Notification sent successfully.")
+        else:
+            print(f"Failed to send notification: {response.status_code}")
+    except Exception as e:
+        print(f"Error sending notification: {e}")
 
 def capture_image_periodically(model, img_path, class_names, class_colors):
     global status, freeze_status
@@ -120,48 +126,6 @@ def capture_image_periodically(model, img_path, class_names, class_colors):
                 cv2.imwrite(img_path, frame)
 
         time.sleep(2) # 나중에 0.1로 바꾸기
-
-# def capture_image_periodically(model, img_path, class_names, class_colors):
-#     global status
-#     while True:
-#         camera.grab()
-#         ret, frame = camera.retrieve()
-
-#         if ret:
-#             results = model(frame)
-#             detected_counts = {name: 0 for name in class_names.values()}
-
-            
-#             for result in results:
-#                 boxes = result.boxes
-#                 for box in boxes:
-#                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
-#                     label_id = int(box.cls)
-#                     color = class_colors.get(label_id, (255, 255, 255))
-#                     label = class_names.get(label_id, 'Unknown')
-
-#                     # 감지된 클래스별 개수 증가
-#                     if label in detected_counts:
-#                         detected_counts[label] += 1
-
-#                     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-#                     cv2.putText(frame, f'{label}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-            
-#             if all(count == 0 for count in detected_counts.values()):
-#                 status = False
-#             else:
-#                 status = True
-
-#             # 로그로 상태 출력
-#             print(f'Status: {status}, Counts: {detected_counts}')
-
-
-#             with lock:
-#                 cv2.imwrite(img_path, frame)
-
-#         #time.sleep(0.1)
-#         time.sleep(2)
-
 
 # 스레드 생성 (model1에 대한 감지)
 thread1 = threading.Thread(target=capture_image_periodically, args=(model1, img_path1, class_names_model1, class_colors_model1))
