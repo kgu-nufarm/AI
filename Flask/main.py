@@ -61,7 +61,7 @@ def send_notification(currnet_box_count):
     params = {
         'userId': 1,
         'box_count': currnet_box_count,
-        'timestamp': datetime.now().isoformat()  # 현재 시간을 ISO 형식으로 추가
+        'timestamp': datetime.now().isoformat()
     }
 
     print(f"Sending GET request to {url} with params: {params}")
@@ -110,15 +110,36 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
                     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                     cv2.putText(frame, f'{label}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
+             # freeze_status True일 때 일정 시간 동안 상태를 변경하지 않음
+            if freeze_status:
+                # print("freeze_status is active, not changing status.")
+                time.sleep(100)  # 100초간 상태 고정
+                freeze_status = False
+
+            # 감지된 객체가 있는 경우 상태를 True로 변경
+            elif any(count > 0 for count in detected_counts.values()):
+                with status_lock:
+                    status = True
+                    # print("Status changed to True due to new detection.")
+
+            # 감지된 객체가 없는 경우 상태를 False로 유지
+            else:
+                with status_lock:
+                    status = False
+
+            # 로그로 상태 출력
+            print(f'Status: {status}, Counts: {detected_counts}')
+
             # 리스트가 비어있다면 최초 감지 시 기록
             if len(box_count_history) == 0 and current_box_count > 0:
                 box_count_history.append(current_box_count)
+                # send_notification(current_box_count)
 
             # 바운딩 박스 개수 증가시 리스트 추가, 백엔드 전송
             elif len(box_count_history) > 0 and current_box_count > box_count_history[-1]:
                 box_count_history.append(current_box_count)
                 current_box.append(current_box_count)
-                send_notification(current_box_count)  # 감소된 경우에만 백엔드로 알림 전송
+                send_notification(current_box_count)
 
             # 바운딩 박스 개수 감소시 리스트 추가
             elif len(box_count_history) > 0 and current_box_count < box_count_history[-1]:
