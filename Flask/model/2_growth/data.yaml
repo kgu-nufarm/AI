@@ -9,6 +9,6 @@ roboflow:
   url: https://universe.roboflow.com/smart-farm-juaeh/-yanc5/dataset/1
   version: 1
   workspace: smart-farm-juaeh
-test: ../test/images
-train: ../train/images
-val: ../valid/images
+test: /content/growth/test/images
+train: /content/growth/train/images
+val: /content/growth/valid/images
