@@ -26,7 +26,7 @@
             setInterval(() => {
                 const img = document.getElementById('live-image');
                 img.src = imageUrl + '?' + new Date().getTime(); // Cache 방지를 위해 timestamp 추가
-            }, 1000);  // 1초마다 이미지 갱신 (필요에 따라 조정 가능)
+            }, 1000);  // 1초마다 이미지 갱신
         } else {
             console.error('Invalid page path: Unable to determine the correct image URL.');
         }
