@@ -8,6 +8,8 @@ from flask_cors import CORS
 import requests
 from flasgger import Swagger
 from datetime import datetime
+import torch
+from torchvision.ops import nms
 
 
 app = Flask(__name__)
@@ -39,14 +41,14 @@ class_names_model2 = {
 }
 
 class_colors_model1 = {
-    0: (255, 0, 0),  # 빨간색 (구멍)
-    1: (127, 255, 212),  # 민트색 (시든거)
+    0: (0, 255, 0), # 구멍(초록)
+    1: (127, 255, 212)  # 시든거(노랑)
 }
 
 class_colors_model2 = {
-    0: (0, 0, 255),
-    1: (0, 255, 0),
-    2: (255, 0, 255),
+    0: (255, 255, 0), # 1단계(노랑)
+    1: (0, 255, 0), # 2단계(초록)
+    2: (255,120,255) # 3단계(핑크)
 }
 
 
@@ -75,7 +77,7 @@ def send_notification(currnet_box_count):
     except Exception as e:
         print(f"Error sending notification: {e}")
 
-def abnormal(model, img_path, class_names, class_colors, sleep_time):
+def abnormal(model, img_path, class_names_model1, class_colors_model1, sleep_time):
     global status, freeze_status, box_count_history, current_box, class_counts
     current_box = []
 
@@ -86,7 +88,7 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
 
         if ret:
             results = model(frame)
-            detected_counts = {name: 0 for name in class_names.values()}
+            detected_counts = {name: 0 for name in class_names_model1.values()}
             current_box_count = 0
             class_counts = {0: 0, 1: 0}
             
@@ -99,8 +101,8 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
                 for box in boxes:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
                     label_id = int(box.cls)
-                    color = class_colors.get(label_id, (255, 255, 255))
-                    label = class_names.get(label_id, 'Unknown')
+                    color = class_colors_model1.get(label_id, (255, 255, 255))
+                    label = class_names_model1.get(label_id, 'Unknown')
 
                     # 감지된 클래스별 개수 증가
                     if label in detected_counts:
@@ -112,7 +114,6 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
 
              # freeze_status True일 때 일정 시간 동안 상태를 변경하지 않음
             if freeze_status:
-                # print("freeze_status is active, not changing status.")
                 time.sleep(100)  # 100초간 상태 고정
                 freeze_status = False
 
@@ -120,7 +121,6 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
             elif any(count > 0 for count in detected_counts.values()):
                 with status_lock:
                     status = True
-                    # print("Status changed to True due to new detection.")
 
             # 감지된 객체가 없는 경우 상태를 False로 유지
             else:
@@ -139,7 +139,7 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
             elif len(box_count_history) > 0 and current_box_count > box_count_history[-1]:
                 box_count_history.append(current_box_count)
                 current_box.append(current_box_count)
-                send_notification(current_box_count)
+                #send_notification(current_box_count) 실제에선 풀기
 
             # 바운딩 박스 개수 감소시 리스트 추가
             elif len(box_count_history) > 0 and current_box_count < box_count_history[-1]:
@@ -153,29 +153,46 @@ def abnormal(model, img_path, class_names, class_colors, sleep_time):
 
         time.sleep(sleep_time)
 
-def growth(model, img_path, class_names, class_colors, sleep_time):
+
+def growth(model, img_path, class_names_model2, class_colors_model2, sleep_time):
     global status, freeze_status
     while True:
         with lock:
             camera.grab()
             ret, frame = camera.retrieve()
-            
-
+        
         if ret:
             results = model(frame)
 
             # 감지된 객체 처리
             for result in results:
-                boxes = result.boxes
-                for box in boxes:
-                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
-                    label_id = int(box.cls)
-                    color = class_colors.get(label_id, (255, 255, 255))
-                    label = class_names.get(label_id, 'Unknown')
+                boxes = result.boxes.xyxy  # (N, 4): 바운딩 박스 좌표 (x1, y1, x2, y2)
+                scores = result.boxes.conf  # (N): 각 박스의 신뢰도 점수
+                labels = result.boxes.cls   # (N): 각 박스의 클래스 레이블
+                
+                # Tensor로 변환 (torchvision의 NMS 함수 사용을 위해)
+                boxes = boxes.cpu()
+                scores = scores.cpu()
+                labels = labels.cpu()
+
+                # NMS 수행: 중복된 바운딩 박스 제거
+                nms_indices = nms(boxes, scores, iou_threshold=0.2)  # 바운딩박스 겹치는 정도 조정
+                
+                # NMS 적용된 결과만 사용
+                boxes = boxes[nms_indices]
+                scores = scores[nms_indices]
+                labels = labels[nms_indices]
+
+                # 바운딩 박스 그리기
+                for i in range(len(boxes)):
+                    x1, y1, x2, y2 = boxes[i].int().tolist()
+                    label_id = int(labels[i])
+                    color = class_colors_model2.get(label_id, (255, 255, 255))
+                    label = class_names_model2.get(label_id, 'Unknown')
 
                     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                     cv2.putText(frame, f'{label}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-            
+
             with lock:
                 cv2.imwrite(img_path, frame)
 
