@@ -3,7 +3,7 @@
  * FileName      : prediect.py
  * Description   : Function to Perform Model Prediction and Organize Results
  * Author        : Jeong Yoo Lim
- * Last modified : 2024.09.30
+ * Last modified : 2024.10.01
  ******************************************************************************************
 """
 import torch
