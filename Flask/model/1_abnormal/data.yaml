@@ -8,6 +8,6 @@ roboflow:
   url: https://universe.roboflow.com/smart-farm-juaeh/-_1-fjpls/dataset/2
   version: 2
   workspace: smart-farm-juaeh
-test: ../test/images
-train: ../train/images
-val: ../valid/images
+test: /content/abnormal/test/images
+train: /content/abnormal/train/images
+val: /content/abnormal/valid/images
