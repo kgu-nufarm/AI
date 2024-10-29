@@ -133,13 +133,13 @@ def abnormal(model, img_path, class_names_model1, class_colors_model1, sleep_tim
             # 리스트가 비어있다면 최초 감지 시 기록
             if len(box_count_history) == 0 and current_box_count > 0:
                 box_count_history.append(current_box_count)
-                # send_notification(current_box_count)
+                send_notification(current_box_count)
 
             # 바운딩 박스 개수 증가시 리스트 추가, 백엔드 전송
             elif len(box_count_history) > 0 and current_box_count > box_count_history[-1]:
                 box_count_history.append(current_box_count)
                 current_box.append(current_box_count)
-                #send_notification(current_box_count) 실제에선 풀기
+                send_notification(current_box_count)
 
             # 바운딩 박스 개수 감소시 리스트 추가
             elif len(box_count_history) > 0 and current_box_count < box_count_history[-1]:
@@ -197,6 +197,21 @@ def growth(model, img_path, class_names_model2, class_colors_model2, sleep_time)
                 cv2.imwrite(img_path, frame)
 
         time.sleep(sleep_time)
+
+# 일반 웹캠을 위한 비디오 피드 생성 함수
+def get_statics():
+    while True:
+        with lock:
+            success, frame = camera.read()  # 웹캠에서 프레임 캡처
+            if not success:
+                break
+            else:
+                ret, buffer = cv2.imencode('.jpg', frame)  # 이미지를 JPEG 형식으로 인코딩
+                frame = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # 프레임을 HTTP 응답으로 생성
+
+# 일반 웹캠 화면을 제공하는 라우트
 
 # 스레드 생성 (model1에 대한 감지)
 thread1 = threading.Thread(target=abnormal, args=(model1, img_path1, class_names_model1, class_colors_model1, 2))
@@ -260,6 +275,11 @@ def get_class_counts():
         'hole': class_counts[0],
         'wither': class_counts[1]
     })
+
+# 4) 유림 >> 건우 : 통계서비스 화면
+# @app.route('/statics', methods=['GET'])
+# def statics():
+#     return Response(get_statics(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
